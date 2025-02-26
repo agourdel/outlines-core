@@ -340,4 +340,93 @@ mod tests {
             .collect();
         assert_eq!(tokens, vec![7, 6, 4, 8]); // Vérifie les TokenId retournés
     }
+
+    #[test]
+    fn test_index_memory_size() {
+        use std::mem::{size_of, size_of_val};
+        let schema = r#"{
+                 "type": "object",
+                     "properties": {
+                         "name": { "type": "string" },
+                         "age": { "type": "integer" }
+
+                     },
+                     "required": ["name", "age"]
+                 }"#;
+
+        // Generate regex from schema
+        let regex = json_schema::regex_from_str(schema, None).unwrap();
+        println!("Generated regex: {}", regex);
+
+        let vocabulary = Vocabulary::from_pretrained("gpt2", None).unwrap();
+
+        let index = Index::new(&regex, &vocabulary).expect("Index failed");
+
+        let struct_size = size_of::<Index>();
+        println!("Size of Index struct: {} bytes", struct_size);
+
+        // Taille des composants fixes
+        let initial_state_size = size_of::<StateId>();
+        let eos_token_size = size_of::<TokenId>();
+        let vocab_size_size = size_of::<usize>();
+
+        // Taille du HashSet des états finaux
+        let final_states_size =
+            size_of_val(index.final_states()) + (index.final_states().len() * size_of::<StateId>());
+        println!("Size of final_states content: {} bytes", final_states_size);
+
+        // Taille des transitions
+        let mut transitions_total_size = size_of_val(index.transitions());
+        let mut key_values_size = 0;
+
+        for (state, inner_map) in index.transitions() {
+            // Taille de la clé StateId
+            key_values_size += size_of_val(state);
+
+            // Taille de la HashMap interne
+            transitions_total_size += size_of_val(inner_map);
+
+            // Taille des entrées de la HashMap interne
+            for (token_id, next_state) in inner_map {
+                key_values_size += size_of_val(token_id) + size_of_val(next_state);
+            }
+        }
+
+        println!(
+            "Size of transitions structure: {} bytes",
+            transitions_total_size
+        );
+        println!("Size of transitions key-values: {} bytes", key_values_size);
+
+        // Taille totale estimée
+        let total_size = struct_size
+            + initial_state_size
+            + final_states_size
+            + transitions_total_size
+            + key_values_size
+            + eos_token_size
+            + vocab_size_size;
+
+        println!("\nEstimated total memory usage:");
+        println!("Structure size: {} bytes", struct_size);
+        println!("Content size: {} bytes", total_size - struct_size);
+        println!("Total size: {} bytes", total_size);
+        println!(
+            "Total size: {:.2} MB",
+            total_size as f64 / (1024.0 * 1024.0)
+        );
+
+        // Statistiques supplémentaires
+        println!("\nTransitions statistics:");
+        println!("Number of states: {}", index.transitions().len());
+        println!(
+            "Total transitions: {}",
+            index.transitions().values().map(|m| m.len()).sum::<usize>()
+        );
+        println!(
+            "Average transitions per state: {:.2}",
+            index.transitions().values().map(|m| m.len()).sum::<usize>() as f64
+                / index.transitions().len() as f64
+        );
+    }
 }

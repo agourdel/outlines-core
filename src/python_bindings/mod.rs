@@ -60,7 +60,6 @@ impl PyGuide {
 
         unsafe {
             let mut_slice = std::slice::from_raw_parts_mut(buffer_ptr, buffer_len);
-            //let bits = BitSlice::<u8, Msb0>::from_slice_mut(mut_slice);
             self.write_into_mask(mut_slice)
         }
     }
@@ -138,7 +137,7 @@ impl PyGuide {
     // Pivate methods.
     fn write_into_mask(&mut self, mask: &mut [u8]) -> PyResult<()> {
         let vocab_size = self.index.get_vocab_size();
-        let total_size = vocab_size + 1; // Arrondi au byte supérieur
+        let total_size = vocab_size + 1; // Ceil
 
         if (mask.len() * 8) < total_size {
             return Err(PyErr::new::<PyValueError, _>(format!(
@@ -148,15 +147,17 @@ impl PyGuide {
             )));
         }
 
-        // Réinitialisation efficace
-        for byte in mask.iter_mut() {
-            *byte = 0;
-        }
+        // Fast reset
+        // for byte in mask.iter_mut() {
+        //     *byte = 0;
+        // }
+
+        mask.fill(0);
 
         if let Some(allowed) = self.index.get_allowed_tokens_iter(self.state) {
             for &token_id in allowed {
-                let byte_idx = token_id as usize / 8;
-                let bit_idx = token_id as usize % 8;
+                let byte_idx = (token_id as usize) >> 3; // Division by 8
+                let bit_idx = (token_id as usize) & 0x7; // modulo 8
                 if byte_idx < mask.len() {
                     mask[byte_idx] |= 1 << (7 - bit_idx); // Format MSB
                 }

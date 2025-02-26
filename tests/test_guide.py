@@ -1,5 +1,6 @@
 import copy
 import pickle
+import time
 from typing import Dict, List, Union
 
 import pytest
@@ -243,3 +244,78 @@ def test_advance_with_mask_invalid_transition(index):
     ):
         guide.advance_with_mask(2, mask)
         guide.advance_with_mask(2, mask)
+
+
+def test_TFM_standard():
+    regexes = [
+        {
+            "name": "email",
+            "regex": "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+        },
+        {"name": "phone", "regex": "\\+?[1-9][0-9]{7,14}"},
+        {
+            "name": "date",
+            "regex": "([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])(\\.|-|/)([1-9]|0[1-9]|1[0-2])(\\.|-|/)([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])|([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])(\\.|-|/)([1-9]|0[1-9]|1[0-2])(\\.|-|/)([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])",
+        },
+        {
+            "name": "ip",
+            "regex": "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)",
+        },
+        {
+            "name": "url",
+            "regex": "(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?",
+        },
+        {"name": "ssn", "regex": "\\d{3}-\\d{2}-\\d{4}"},
+    ]
+    vocab = Vocabulary.from_pretrained("gpt2")
+    print("\n> Current Behavior :")
+    for regex in regexes:
+        index = Index(regex["regex"], vocab)
+        guide = Guide(index)
+
+        start = time.perf_counter()
+
+        guide.get_tokens()
+
+        end = time.perf_counter()
+
+        elapsed_us = (end - start) * 1e6  # Conversion en microsecondes
+        print(f"{regex['name']}: TFM: {elapsed_us:.2f} µs")
+
+
+def test_TFM_optimized():
+    regexes = [
+        {
+            "name": "email",
+            "regex": "[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?",
+        },
+        {"name": "phone", "regex": "\\+?[1-9][0-9]{7,14}"},
+        {
+            "name": "date",
+            "regex": "([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])(\\.|-|/)([1-9]|0[1-9]|1[0-2])(\\.|-|/)([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])|([0-9][0-9]|19[0-9][0-9]|20[0-9][0-9])(\\.|-|/)([1-9]|0[1-9]|1[0-2])(\\.|-|/)([1-9]|0[1-9]|1[0-9]|2[0-9]|3[0-1])",
+        },
+        {
+            "name": "ip",
+            "regex": "(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)",
+        },
+        {
+            "name": "url",
+            "regex": "(https?:\\/\\/)?([\\da-z\\.-]+)\\.([a-z\\.]{2,6})([\\/\\w \\.-]*)*\\/?",
+        },
+        {"name": "ssn", "regex": "\\d{3}-\\d{2}-\\d{4}"},
+    ]
+    vocab = Vocabulary.from_pretrained("gpt2")
+    print("\n> Optimized Behavior :")
+    for regex in regexes:
+        index = Index(regex["regex"], vocab)
+        guide = Guide(index)
+        mask = create_mask(len(vocab) + 1)
+
+        start = time.perf_counter()
+
+        guide.get_tokens_into_mask(mask)
+
+        end = time.perf_counter()
+
+        elapsed_us = (end - start) * 1e6  # Conversion en microsecondes
+        print(f"{regex['name']}: TFM: {elapsed_us:.2f} µs")
