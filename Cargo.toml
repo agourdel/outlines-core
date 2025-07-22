@@ -17,7 +17,7 @@ serde_json = { version = "1.0", features = ["preserve_order"] }
 serde = {version = "1.0", features = ["derive"]}
 bincode = "2.0.0-rc.3"
 # Fragile dependencies, minor updates often break the code
-hf-hub = "=0.3.2"
+hf-hub = "=0.4"
 tokenizers = { version = "=0.20.3", features = ["http"] }
 rustc-hash = "2.1.0"
 regex-automata = { git = "https://github.com/agourdel/regex.git", branch = "custom_dfa",package = "regex-automata" } 
