@@ -174,6 +174,18 @@ impl TokenProcessor {
                                     spacechar = replacement;
                                 }
                             }
+                            DecoderWrapper::ByteLevel(_) => {
+                                println!("  → ByteLevel decoder (nouveau cas?)");
+                                // Ajoutez ce cas si c'est ça
+                            }
+                            DecoderWrapper::Strip(_) => {
+                                println!("  → Strip decoder (nouveau cas?)");
+                                // Ou ce cas
+                            }
+                            DecoderWrapper::Sequence(_) => {
+                                println!("  → Nested Sequence decoder");
+                                // Ou celui-ci
+                            }
                             _ => {}
                         }
                     }
