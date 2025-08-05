@@ -84,16 +84,17 @@ impl Vocabulary {
         let mut tokenizer = Tokenizer::from_pretrained(model, parameters.clone())?;
         println!("## after tokenizer::from_pretrained");
         Self::filter_prepend_normalizers(&mut tokenizer);
-
+        println!("## after filter_prepend_normalizers");
         // Locate eos_token_id in defined locations.
         let eos_token_id = L::locate_eos_token_id(model, &tokenizer, &parameters);
+        println!("## after locate_eos_token_id");
         let Some(eos_token_id) = eos_token_id else {
             return Err(Error::UnsupportedTokenizer {
                 model: model.to_string(),
                 reason: "EOS token id".to_string(),
             });
         };
-
+        println!("## after Some()");
         // Start building the vocabulary from eos_token_id and added tokens.
         let mut vocabulary = Vocabulary::new(eos_token_id);
         for (id, added_token) in tokenizer.get_added_tokens_decoder().iter() {
@@ -101,7 +102,7 @@ impl Vocabulary {
                 vocabulary.try_insert(added_token.content.clone(), *id)?
             }
         }
-
+        println!("## after Vocabulary::new()");
         // Process each vocabulary token according to the tokenizer's level.
         let Ok(processor) = TokenProcessor::new(&tokenizer) else {
             return Err(Error::UnsupportedTokenizer {
@@ -109,6 +110,7 @@ impl Vocabulary {
                 reason: "Token processor".to_string(),
             });
         };
+        println!("## after TokenProcessor::new()");
         for (token, token_id) in tokenizer.get_vocab(false) {
             if token_id != eos_token_id {
                 let processed_token = processor.process(&token)?;

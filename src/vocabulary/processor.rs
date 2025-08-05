@@ -156,10 +156,12 @@ impl TokenProcessor {
                     level: TokenProcessorLevel::Byte,
                 }),
                 DecoderWrapper::Sequence(decoding_sequence) => {
+                    println!("DecoderWrapper::Sequence");
                     let mut is_byte_fallback = false;
                     let mut spacechar = ' '.to_string();
 
-                    for decoder in decoding_sequence.as_ref() {
+                    for decoder in decoding_sequence.get_decoders() {
+                        println!("decoder _ loop ");
                         match decoder {
                             DecoderWrapper::ByteFallback(_) => {
                                 is_byte_fallback = true;
