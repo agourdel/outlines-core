@@ -159,7 +159,7 @@ impl TokenProcessor {
                     let mut is_byte_fallback = false;
                     let mut spacechar = ' '.to_string();
 
-                    for decoder in decoding_sequence.get_decoders() {
+                    for decoder in decoding_sequence.as_ref() {
                         match decoder {
                             DecoderWrapper::ByteFallback(_) => {
                                 is_byte_fallback = true;
