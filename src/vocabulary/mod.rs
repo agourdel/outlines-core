@@ -172,7 +172,7 @@ impl Vocabulary {
                 NormalizerWrapper::Sequence(normalization_sequence) => {
                     let new_sequence = Sequence::new(
                         normalization_sequence
-                            .get_normalizers()
+                            .as_ref()
                             .iter()
                             .filter_map(|normalizer| match normalizer {
                                 NormalizerWrapper::Prepend(_) => None,
