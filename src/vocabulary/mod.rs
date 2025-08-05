@@ -80,7 +80,9 @@ impl Vocabulary {
         model: &str,
         parameters: Option<FromPretrainedParameters>,
     ) -> Result<Self> {
+        println!("## from_pretrained_with_locator");
         let mut tokenizer = Tokenizer::from_pretrained(model, parameters.clone())?;
+        println!("## after tokenizer::from_pretrained");
         Self::filter_prepend_normalizers(&mut tokenizer);
 
         // Locate eos_token_id in defined locations.
