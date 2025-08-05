@@ -158,6 +158,7 @@ impl TokenProcessor {
                 DecoderWrapper::Sequence(decoding_sequence) => {
                     println!("DecoderWrapper::Sequence");
                     let mut is_byte_fallback = false;
+                    let mut is_byte_level = false;
                     let mut spacechar = ' '.to_string();
 
                     for decoder in decoding_sequence.get_decoders() {
@@ -175,16 +176,7 @@ impl TokenProcessor {
                                 }
                             }
                             DecoderWrapper::ByteLevel(_) => {
-                                println!("  → ByteLevel decoder (nouveau cas?)");
-                                // Ajoutez ce cas si c'est ça
-                            }
-                            DecoderWrapper::Strip(_) => {
-                                println!("  → Strip decoder (nouveau cas?)");
-                                // Ou ce cas
-                            }
-                            DecoderWrapper::Sequence(_) => {
-                                println!("  → Nested Sequence decoder");
-                                // Ou celui-ci
+                                is_byte_level = true;
                             }
                             _ => {}
                         }
@@ -193,6 +185,10 @@ impl TokenProcessor {
                     if is_byte_fallback {
                         Ok(Self {
                             level: TokenProcessorLevel::ByteFallback(Mods { spacechar }),
+                        })
+                    } else if is_byte_level  {
+                        Ok(Self {
+                            level: TokenProcessorLevel::Byte 
                         })
                     } else {
                         Err(Error::UnsupportedByTokenProcessor)
