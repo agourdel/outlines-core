@@ -226,9 +226,6 @@ impl Index {
 
     /// Returns transition state for a given state and token id or `None` otherwise.
     pub fn next_state(&self, state: &StateId, token_id: &TokenId) -> Option<StateId> {
-        if token_id == &self.eos_token_id {
-            return None;
-        }
         Some(*self.transitions.get(state)?.get(token_id)?)
     }
 
